@@ -6,7 +6,7 @@
 classdef DX_XM430_W350
     % Constants
     properties (Constant) 
-        LIB_NAME = 'libdxl_x64_c'; % Library for Linux, change if other OS
+        LIB_NAME = DX_XM430_W350.libName(); % Picks the Dynamixel library for the current OS
         BAUDRATE = 1000000;
         PROTOCOL_VERSION = 2.0;
         COMM_SUCCESS = 0;
@@ -277,4 +277,17 @@ classdef DX_XM430_W350
             end
         end
     end % end methods
+
+    methods (Static)
+        % Name of the compiled Dynamixel SDK library for this OS
+        function name = libName()
+            if ismac
+                name = 'libdxl_mac_c';
+            elseif ispc
+                name = 'dxl_x64_c';
+            else
+                name = 'libdxl_x64_c';
+            end
+        end
+    end
 end % end class

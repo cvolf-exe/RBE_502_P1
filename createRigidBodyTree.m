@@ -6,7 +6,7 @@ function [robot,homeConfig] = createRigidBodyTree
 
 % Import the robot description from the URDF file
 try
-    robot = importrobot('open_manipulator_x.urdf');
+    robot = importrobot('/Users/colette/Documents/Courses/RBE 502/RBE_502_P1/open_manipulator_x.urdf');
     
     % Add gravity
     gravityVec = [0 0 -9.80665];
@@ -21,8 +21,8 @@ try
     addBody(robot,eeBody,'link5');
     
 % If this fails, load the preloaded rigid body tree
-catch
-    warning('Error importing URDF file. Loading presaved object.');
+catch err
+    warning('Error importing URDF file (%s). Loading presaved object.', err.message);
     load openManipulatorDescription robot
 end
 

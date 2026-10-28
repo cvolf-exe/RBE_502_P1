@@ -42,7 +42,11 @@ classdef OM_X_arm < handle
                 devices = serialportlist();
                 disp("devices:")
                 disp(devices)
-                ttyDevs = devices(contains(devices,"/dev/ttyUSB"));
+                if ismac
+                    ttyDevs = devices(contains(devices,["/dev/cu.usbserial", "/dev/cu.usbmodem"]));
+                else
+                    ttyDevs = devices(contains(devices,"/dev/ttyUSB"));
+                end
                 % ttyDevs = devices(contains(devices,"COM5"));
                 disp("ttyDevs: ")
                 disp(ttyDevs)
