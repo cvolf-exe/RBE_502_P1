@@ -1,4 +1,5 @@
 clc, clear all, close all;
+addpath('problem1_position_control');
 
 %% Load rigid body tree
 robot = createRigidBodyTree;
@@ -41,17 +42,19 @@ errHist = zeros(3, length(t));
 %% Simulate differential inverse kinematics controller
 figure;
 for k = 1:length(t)
+
     %% Forward Kinematic
     %% Implement this
-    x = openManipulatorPosition();
+    x = openManipulatorPosition(q, params);
     
     %% Save data
     qHist(:, k) = q;
     xHist(:, k) = x;
     errHist(:, k) = x_des - x;
+    
     %% Control Law
     %% Implement this
-    qdot = ControLaw();
+    qdot = controlLaw();
     
     %% Integration of the velocities
     q = q + dt*qdot;
