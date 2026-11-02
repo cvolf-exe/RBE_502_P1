@@ -33,14 +33,6 @@ params.ell_e = 0.12;
 x_des = [0.20; 0.20; 0.15];    
 Kp = 5.0;
 
-%% Symbolic Jacobian 
-syms q1 q2 q3 q4
-qSym = [q1; q2; q3; q4]; 
-xSim = openManipulatorPosition(qSym, params); 
-JSym = jacobian(xSim, qSym);
-% Convert to a numeric function
-J = matlabFunction(JSym, "Vars", {qSym});
-
 qHist = zeros(numel(q), length(t));
 qdotHist = zeros(numel(q), length(t));
 xHist = zeros(3, length(t));
@@ -59,7 +51,7 @@ for k = 1:length(t)
     errHist(:, k) = norm(x_des - x);
 
     %% Control Law
-    qdot = controlLaw(J, Kp, x, x_des, q);
+    qdot = controlLaw(Kp, x, x_des, q, params);
     qdotHist(:,k)= qdot;
 
     %% Integration of the velocities
@@ -73,8 +65,12 @@ for k = 1:length(t)
     hold off;
     axis([-0.1 0.4 -0.3 0.3 0 0.4]);
     grid on;
+    view(90,0); 
     drawnow;
+  
 end
+
+fprintf("Final Q %d", q); 
 
 %% Plot the required results
 % 1. Angular Displacement of each joint 
@@ -107,6 +103,8 @@ for i = 1:3
     title(sprintf("EE %c Position over Time", char('x' + i - 1)));
     xlabel("Time");
     ylabel("Position");
+    ylim([0 0.3])
+    legend('EE Position', 'Goal Position')
     grid on;
 end
 
@@ -144,14 +142,44 @@ function x = openManipulatorPosition(q, params)
 
 end
 
-function q_dot = controlLaw(J, K, x, x_des, q)
+function J = calculate_jacobian(q, params)
+
+    c1 = cos(q(1)); 
+    c2 = cos(q(2));
+    s1 = sin(q(1));
+    s2 = sin(q(2));
+    
+    c23  = cos(q(2) + q(3)); 
+    s23 = sin(q(2) + q(3)); 
+    
+    c234 = cos(q(2)+ q(3)+ q(4)); 
+    s234 = sin(q(2)+ q(3)+ q(4)); 
+    
+    r = params.a1*c2 + params.d2*s2 + params.a2*c23 + params.ell_e*c234;
+
+    % Derivatives of r with respect to q2, q3, and q4
+    r2 = -params.a1*s2 + params.d2*c2 - params.a2*s23 - params.ell_e*s234;
+    r3 = -params.a2*s23 - params.ell_e*s234;
+    r4 = -params.ell_e*s234;
+
+    % Derivatives of p3 wrt q3 and q4
+    z3 = -params.a2*c23 - params.ell_e*c234;
+    z4 = -params.ell_e*c234;
+
+    J = [-s1*r, c1*r2, c1*r3, c1*r4;
+        c1*r, s1*r2, s1*r3, s1*r4;
+        0,    -r,    z3,    z4];
+
+end
+
+function q_dot = controlLaw(K, x, x_des, q, params)
     % Evaluate the jacobian at the current joint positions
-    J_at_q = J(q);
+    J = calculate_jacobian(q, params);
     
     % Compute the error
     error = x_des - x;
 
     % Return the joint velocity commands
-    q_dot = pinv(J_at_q) * K * error;
+    q_dot = pinv(J) * K * error;
 
 end
